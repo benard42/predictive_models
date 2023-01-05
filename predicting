@@ -1,0 +1,220 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn import model_selection
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2
+from sklearn import preprocessing
+from sklearn import model_selection,neighbors
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score,cross_val_predict
+from sklearn.metrics import accuracy_score,recall_score,roc_auc_score,confusion_matrix
+from sklearn.model_selection import cross_val_score,cross_val_predict
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score,recall_score,roc_auc_score,confusion_matrix
+from sklearn.svm import SVC
+import seaborn as sns
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import accuracy_score,recall_score,roc_auc_score,confusion_matrix
+# sets the backend of matplotlib to the 'inline' backend. 
+# %matplotlib inline                   
+
+df= pd.read_csv('kerala.csv')
+dff = df.head(5)
+
+# print(dff)
+# print(df.info())
+
+# print(df.shape)
+
+# print(df.describe())
+
+# print(df.corr())
+
+df['FLOODS'].replace(['YES', 'NO'], [1,0], inplace=True)
+print(df.head(5))
+
+df.isnull().sum()  # cheaking if any colomns is left empty or not.
+
+print(df.cov())
+
+
+# How the rainfall index vary during rainy season
+c = df[['JUN','JUL','AUG','SEP']]
+c.hist()
+plt.show()
+
+ax = df[['JAN', 'FEB', 'MAR', 'APR','MAY', 'JUN', 'AUG', 'SEP', 'OCT','NOV','DEC']].mean().plot.bar(width=0.5,edgecolor='k',align='center',linewidth=2,figsize=(14,6))
+plt.xlabel('Month',fontsize=30)
+plt.ylabel('Monthly Rainfall',fontsize=20)
+plt.title('Rainfall in Kerela for all Months',fontsize=25)
+ax.tick_params(labelsize=20)
+plt.grid()
+plt.ioff()
+
+x= df.iloc[:,1:14]   #all features
+y= df.iloc[:,-1]   #target output (floods)
+
+# Scaling the data between 0 and 1.
+minmax = preprocessing.MinMaxScaler(feature_range=(0,1))
+minmax.fit(x).transform(x)
+
+#dividing the dataset into training dataset and test dataset. 
+
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2)
+x_train.head()
+
+x_train.dtypes
+
+y_train=y_train.astype('int')
+y_train
+
+y_test=y_test.astype('int')
+y_test
+
+#KNN classifier to predict
+clf=neighbors.KNeighborsClassifier()
+clf.fit(x_train,y_train)
+
+# Predicted chance of Flood.
+print("Predicted Values for the Floods:")
+y_predict=clf.predict(x_test)
+y_predict
+
+print("Actual Values for the Floods:")
+print(y_test)
+
+print("List of the Predicted Values:")
+print(y_predict)
+
+# Scaling the dataset.
+
+x_train_std= minmax.fit_transform(x_train)
+x_test_std= minmax.fit_transform(x_test)
+knn_acc=cross_val_score(clf,x_train_std,y_train,cv=3,scoring='accuracy',n_jobs=-1)
+knn_proba=cross_val_predict(clf,x_train_std,y_train,cv=3,method='predict_proba')
+
+knn_acc
+knn_proba
+
+
+print("\nAccuracy Score:%f"%(accuracy_score(y_test,y_predict)*100))
+print("Recall Score:%f"%(recall_score(y_test,y_predict)*100))
+print("ROC score:%f"%(roc_auc_score(y_test,y_predict)*100))
+print(confusion_matrix(y_test,y_predict))
+
+x_train_std=minmax.fit_transform(x_train)         # fit the values in between 0 and 1.
+y_train_std=minmax.transform(x_test)
+
+
+lr=LogisticRegression()
+lr.fit(x_train,y_train)
+lr_acc=cross_val_score(lr,x_train_std,y_train,cv=3,scoring='accuracy',n_jobs=-1)
+lr_proba=cross_val_predict(lr,x_train_std,y_train,cv=3,method='predict_proba')
+
+lr_acc
+lr_acc
+
+y_pred=lr.predict(x_test)
+y_pred
+
+print(y_test.values)
+
+print("List of the Predicted Values:")
+print(y_pred)
+
+print("\naccuracy score:%f"%(accuracy_score(y_test,y_pred)*100))
+print("recall score:%f"%(recall_score(y_test,y_pred)*100))
+print("roc score:%f"%(roc_auc_score(y_test,y_pred)*100))
+print(confusion_matrix(y_test,y_pred))
+
+svc=SVC(kernel='rbf',probability=True)
+svc_classifier=svc.fit(x_train,y_train)
+svc_acc=cross_val_score(svc_classifier,x_train_std,y_train,cv=3,scoring="accuracy",n_jobs=-1)
+svc_proba=cross_val_predict(svc_classifier,x_train_std,y_train,cv=3,method='predict_proba')
+svc_acc
+svc_proba
+
+svc_scores=svc_proba[:,1]
+svc_scores
+
+y_pred=svc_classifier.predict(x_test)
+print("Actual Flood Values:")
+print(y_test.values)
+
+print("Predicted Flood Values:")
+print(y_pred)
+
+
+print("\naccuracy score:%f"%(accuracy_score(y_test,y_pred)*100))
+print("recall score:%f"%(recall_score(y_test,y_pred)*100))
+print("roc score:%f"%(roc_auc_score(y_test,y_pred)*100))
+print(confusion_matrix(y_test,y_pred))
+
+dtc_clf=DecisionTreeClassifier()
+dtc_clf.fit(x_train,y_train)
+dtc_clf_acc=cross_val_score(dtc_clf,x_train_std,y_train,cv=3,scoring="accuracy",n_jobs=-1)
+dtc_clf_acc
+
+print("Predicted Values:")
+y_pred=dtc_clf.predict(x_test)
+y_pred
+
+print("Actual Values:")
+print(y_test.values)
+
+print("\naccuracy score:%f"%(accuracy_score(y_test,y_pred)*100))
+print("recall score:%f"%(recall_score(y_test,y_pred)*100))
+print("roc score:%f"%(roc_auc_score(y_test,y_pred)*100))
+print(confusion_matrix(y_test,y_pred))
+
+rmf=RandomForestClassifier(max_depth=3,random_state=0)
+rmf_clf=rmf.fit(x_train,y_train)
+rmf_clf
+
+rmf_clf_acc=cross_val_score(rmf_clf,x_train_std,y_train,cv=3,scoring="accuracy",n_jobs=-1)
+rmf_proba=cross_val_predict(rmf_clf,x_train_std,y_train,cv=3,method='predict_proba')
+
+rmf_clf_acc
+rmf_proba
+
+print("\naccuracy score:%f"%(accuracy_score(y_test,y_pred)*100))
+print("recall score:%f"%(recall_score(y_test,y_pred)*100))
+print("roc score:%f"%(roc_auc_score(y_test,y_pred)*100))
+print(confusion_matrix(y_test,y_pred))
+
+models = []
+models.append(('KNN', KNeighborsClassifier()))
+models.append(('LR', LogisticRegression()))
+models.append(('SVC', SVC()))
+models.append(('DT', DecisionTreeClassifier()))
+models.append(('RF', RandomForestClassifier()))
+
+names = []
+scores = []
+for name, model in models:
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    scores.append(accuracy_score(y_test, y_pred))
+    names.append(name)
+tr_split = pd.DataFrame({'Name': names, 'Score': scores})
+tr_split
+
+axis = sns.barplot(x = 'Name', y = 'Score', data =tr_split )
+axis.set(xlabel='Classifier Models', ylabel='Accuracy of the Model')
+for p in axis.patches:
+    height = p.get_height()
+    axis.text(p.get_x() + p.get_width()/2, height + 0.01, '{:1.4f}'.format(height), ha="center") 
+    
+plt.show()
+
+tr_split['Score'].max() 
